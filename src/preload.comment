@@ -1,0 +1,9 @@
+{{#each plugins}}
+/* @__PURE__ */
+export * as plugin_{{.}} from './{{.}}';
+{{/each}}
+
+{{#each components}}
+/* @__PURE__ */
+export * as component_{{.}} from './components/{{.}}.svelte';
+{{/each}}
