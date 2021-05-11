@@ -7,7 +7,7 @@ import SveltePreprocess from 'svelte-preprocess';
 import { build, Plugin } from 'esbuild';
 import { typescript } from 'svelte-preprocess-esbuild';
 
-const globFiles = (glob: string) => 
+const globFiles = (glob: string) =>
 fg.sync(glob, { objectMode: true })
   .map(x => path.basename(x.name, path.extname(x.name)));
 
@@ -33,8 +33,10 @@ const PrebuildPlugin: PrebuildPluginArgs = () => {
         return new Promise(async (resolve) => {
           const entryData = await fs.readFile(args.path.replace(/:entry-point:$/, ''));
 
-          const currentPlugins = globFiles('src/plugins/*.ts');
-          const currentComponents = globFiles('src/components/*.svelte');
+          const currentPlugins = globFiles('src/plugins/[a-zA-Z0-9_]+.ts');
+          const currentComponents = globFiles('src/components/[a-zA-Z0-9_]+.svelte');
+
+          console.log(currentPlugins, currentComponents);
 
           const template = Handlebars.compile(`
             {{#each currentPlugins}}
@@ -87,9 +89,14 @@ const BundlingPlugin: BundlingPluginArgs = ({ plugins, components }) => {
           const currentComponents = components.filter(x => globFiles('src/components/*.svelte').includes(x));
 
           const template = Handlebars.compile(`
-            {{#each currentPlugins}}
-            import { plugin_{{.}} } from '../out/entry.middle.js';
-            {{/each}}
+            import {
+              {{#each currentPlugins}}
+              plugin_{{.}},
+              {{/each}}
+              {{#each currentComponents}}
+              component_{{.}},
+              {{/each}}
+            } from '../out/entry.middle.js';
 
             export const plugins = {
               {{#each currentPlugins}}
@@ -97,8 +104,10 @@ const BundlingPlugin: BundlingPluginArgs = ({ plugins, components }) => {
               {{/each}}
             }
 
-            {{#each currentComponents}}
-            import { component_{{.}} } from '../out/entry.middle.js';
+            {{#each currentPlugins}}
+            if ('setup' in plugins.{{.}} && typeof plugins.{{.}}.setup === 'function') {
+              plugins.{{.}}.setup();
+            }
             {{/each}}
 
             export const components = {
@@ -161,7 +170,7 @@ async function bundling() {
     platform: 'node',
     plugins: [
       BundlingPlugin({
-        plugins: ['FirstPlugin2', 'b', 'c'],
+        plugins: ['FirstPlugin', 'SecondPlugin', 'c'],
         components: ['zxcv']
       })
     ],
