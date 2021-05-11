@@ -33,20 +33,20 @@ const PrebuildPlugin: PrebuildPluginArgs = () => {
         return new Promise(async (resolve) => {
           const entryData = await fs.readFile(args.path.replace(/:entry-point:$/, ''));
 
-          const currentPlugins = globFiles('src/plugins/[a-zA-Z0-9_]+.ts');
-          const currentComponents = globFiles('src/components/[a-zA-Z0-9_]+.svelte');
+          const currentPlugins = globFiles('src/plugins/[a-zA-Z0-9_-]+.ts');
+          const currentComponents = globFiles('src/components/[a-zA-Z0-9_-]+.svelte');
 
           console.log(currentPlugins, currentComponents);
 
           const template = Handlebars.compile(`
             {{#each currentPlugins}}
-            import __plugin_{{.}} from './plugins/{{.}}';
-            export const plugin_{{.}} = __plugin_{{.}};
+            import __plugin_{{@index}} from './plugins/{{.}}';
+            export const plugin_{{@index}} = __plugin_{{@index}};
             {{/each}}
 
             {{#each currentComponents}}
-            import __component_{{.}} from './components/{{.}}.svelte';
-            export const component_{{.}} = __component_{{.}};
+            import __component_{{@index}} from './components/{{.}}.svelte';
+            export const component_{{@index}} = __component_{{@index}};
             {{/each}}
           `);
           const preload = template({ currentPlugins, currentComponents });
@@ -91,28 +91,28 @@ const BundlingPlugin: BundlingPluginArgs = ({ plugins, components }) => {
           const template = Handlebars.compile(`
             import {
               {{#each currentPlugins}}
-              plugin_{{.}},
+              plugin_{{@index}},
               {{/each}}
               {{#each currentComponents}}
-              component_{{.}},
+              component_{{@index}},
               {{/each}}
             } from '../out/entry.middle.js';
 
             export const plugins = {
               {{#each currentPlugins}}
-              {{.}}: plugin_{{.}},
+              [plugin_{{@index}}.name]: plugin_{{@index}},
               {{/each}}
             }
 
             {{#each currentPlugins}}
-            if ('setup' in plugins.{{.}} && typeof plugins.{{.}}.setup === 'function') {
-              plugins.{{.}}.setup();
+            if ('setup' in plugin_{{@index}} && typeof plugin_{{@index}}.setup === 'function') {
+              plugin_{{@index}}.setup();
             }
             {{/each}}
 
             export const components = {
               {{#each currentComponents}}
-              {{.}}: component_{{.}},
+              '{{.}}': component_{{@index}},
               {{/each}}
             }
           `);
@@ -170,7 +170,7 @@ async function bundling() {
     platform: 'node',
     plugins: [
       BundlingPlugin({
-        plugins: ['FirstPlugin', 'SecondPlugin', 'c'],
+        plugins: ['FirstPlugin', 'second-plugin', 'c'],
         components: ['zxcv']
       })
     ],

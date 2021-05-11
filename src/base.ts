@@ -1,7 +1,8 @@
 export interface PluginStructure {
-    setup: (...args: any[]) => void;
+  name: string;
+  setup: (...args: any[]) => void;
 }
 
 export function definePlugin(args: PluginStructure) {
-    return args;
+  return args;
 }

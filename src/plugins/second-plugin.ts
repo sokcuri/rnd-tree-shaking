@@ -1,8 +1,8 @@
 import { definePlugin } from "@/base";
 
 export default definePlugin({
-  name: 'FirstPlugin1234',
+  name: 'second-plugin',
   setup() {
-      console.log('first plugin');
+      console.log('second plugin');
   }
 })
